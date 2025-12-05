@@ -464,22 +464,8 @@ public class GameService
                 game.CurrentTrick.LeadSuit = trumpToPlay.Suit;
             }
 
-            if (game.CurrentTrick.Cards.Count == 4)
-            {
-                ResolveTrick(game);
-                if (game.Players.All(p => p.Hand.Count == 0))
-                {
-                    EndRound(game);
-                }
-                else
-                {
-                    game.CurrentTrick = new Trick { LeadPlayerPosition = game.CurrentPlayerPosition };
-                }
-            }
-            else
-            {
-                game.CurrentPlayerPosition = (game.CurrentPlayerPosition + 1) % 4;
-            }
+            // Turn stays with the asking player so they can play their card
+            // Do NOT advance turn or resolve trick here - let the asking player play normally
 
             return new AskTrumpResult
             {
@@ -490,6 +476,7 @@ public class GameService
             };
         }
 
+        // Contractor has no trump - turn stays with asking player to play their card
         return new AskTrumpResult
         {
             Success = true,
