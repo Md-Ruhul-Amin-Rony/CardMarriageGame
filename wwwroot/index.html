@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>29 Card Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <div id="lobby" class="screen">
+            <h1>29 Card Game</h1>
+            <div class="form-group">
+                <input type="text" id="playerName" placeholder="Your Name" />
+                <input type="text" id="roomId" placeholder="Room ID" />
+                <button id="joinBtn">Join Room</button>
+            </div>
+            <div id="lobbyPlayers"></div>
+            <button id="startBtn" style="display:none;">Start Game</button>
+        </div>
+
+        <div id="game" class="screen" style="display:none;">
+            <div id="gameInfo">
+                <div id="roomInfo"></div>
+                <div id="phaseInfo"></div>
+                <div id="trumpInfo"></div>
+                <div id="scoreInfo"></div>
+            </div>
+
+            <div id="biddingSection" style="display:none;">
+                <h2>Bidding Phase</h2>
+                <div id="currentBidInfo"></div>
+                <div id="bidControls">
+                    <input type="number" id="bidAmount" min="16" step="1" placeholder="Bid (min 16)" />
+                    <button id="placeBidBtn">Place Bid</button>
+                    <button id="passBtn">Pass</button>
+                </div>
+            </div>
+
+            <div id="trumpChoiceSection" style="display:none;">
+                <h2>Choose Trump Suit</h2>
+                <div class="suit-buttons">
+                    <button class="trump-btn" data-suit="Hearts">♥ Hearts</button>
+                    <button class="trump-btn" data-suit="Diamonds">♦ Diamonds</button>
+                    <button class="trump-btn" data-suit="Clubs">♣ Clubs</button>
+                    <button class="trump-btn" data-suit="Spades">♠ Spades</button>
+                </div>
+            </div>
+
+            <div id="playingSection" style="display:none;">
+                <div id="table">
+                    <div id="currentTrick"></div>
+                </div>
+                <div id="hand">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">Your Hand</h3>
+                        <button id="askTrumpBtn" class="btn" style="display:none; background: #FF9800; color: white; padding: 10px 20px; font-size: 14px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer;">Ask for Trump 🃏</button>
+                    </div>
+                    <div id="handCards"></div>
+                </div>
+            </div>
+
+            <div id="roundEndSection" style="display:none;">
+                <h2>Round Complete</h2>
+                <div id="winMessage"></div>
+                <button id="newRoundBtn">New Round</button>
+            </div>
+        </div>
+
+        <div id="messages"></div>
+
+        <!-- Chat Box -->
+        <div id="chatBox" class="chat-box">
+            <button id="chatToggle" class="chat-toggle">💬 Game Chat<span id="chatBadge" class="chat-badge" style="display:none;">0</span></button>
+            <div id="chatContent" class="chat-content">
+                <div class="chat-header">
+                    <span>💬 Game Chat</span>
+                    <button id="minimizeChat" class="minimize-btn" title="Minimize">−</button>
+                </div>
+                <div id="chatMessages" class="chat-messages">
+                    <!-- Chat messages will appear here -->
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" id="chatInput" placeholder="Type a message..." class="chat-input" />
+                    <button id="sendChatBtn" class="chat-send-btn">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
