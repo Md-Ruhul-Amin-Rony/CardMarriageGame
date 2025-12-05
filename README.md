@@ -10,14 +10,14 @@ A real-time, multiplayer implementation of the classic **29 Card Game** (also kn
 
 ## 📋 Table of Contents
 
-- [About the Game](#-about-the-game)
-- [Features](#-features)
-- [Getting Started](#-getting-started)
-- [Game Rules](#-game-rules)
-- [Technology Stack](#-technology-stack)
-- [Project Structure](#-project-structure)
-- [Deployment](#-deployment)
-- [Contributing](#-contributing)
+- [About the Game](#about-the-game)
+- [Features](#features)
+- [Getting Started](#getting-started)
+- [Game Rules](#game-rules)
+- [Technology Stack](#technology-stack)
+- [Project Structure](#project-structure)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
 
 ---
 
@@ -80,8 +80,8 @@ A real-time, multiplayer implementation of the classic **29 Card Game** (also kn
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/card-game-29.git
-cd card-game-29
+git clone https://github.com/Md-Ruhul-Amin-Rony/CardMarriageGame.git
+cd CardMarriageGame
 ```
 
 2. **Restore dependencies**
@@ -349,7 +349,3 @@ This project is licensed under the MIT License.
 Made with ❤️ for card game enthusiasts
 
 </div>
-# CardMarriageGame
-#   C a r d M a r r i a g e G a m e 
- 
- 
