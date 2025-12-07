@@ -149,9 +149,9 @@ public class GameService
         {
             var player = game.Players[i];
             Console.WriteLine($"Player {i} ({player.Name}) has {player.Hand.Count} cards before dealing remaining");
-            
+
             var remainingCards = game.Deck.Skip(cardIndex).Take(4).ToList();
-            
+
             // Add the new 4 cards
             foreach (var card in remainingCards)
             {
@@ -160,7 +160,7 @@ public class GameService
                     player.Hand.Add(card);
                 }
             }
-            
+
             Console.WriteLine($"Player {i} ({player.Name}) now has {player.Hand.Count} cards after dealing remaining");
             cardIndex += 4;
         }
@@ -387,7 +387,7 @@ public class GameService
                 game.Team1RoundsWon++;
             else
                 game.Team2RoundsWon++;
-                
+
             string marriageNote = game.OpposingTeamHasTrumpMarriage ? $" (Required: {requiredPoints} due to opposing marriage)" : "";
             game.WinMessage = $"Contractor (Player {game.ContractorPosition + 1}) wins! Scored {contractorTeamPoints} (bid: {game.ContractorBid}{marriageNote})";
         }
@@ -398,7 +398,7 @@ public class GameService
                 game.Team2RoundsWon++;
             else
                 game.Team1RoundsWon++;
-                
+
             string marriageNote = game.OpposingTeamHasTrumpMarriage ? $" (Required: {requiredPoints} due to opposing marriage)" : "";
             game.WinMessage = $"Contractor (Player {game.ContractorPosition + 1}) fails! Scored {contractorTeamPoints} (bid: {game.ContractorBid}{marriageNote})";
         }
@@ -430,13 +430,13 @@ public class GameService
             return new AskTrumpResult { Success = false, Message = "Trump already revealed" };
 
         var leadSuit = game.CurrentTrick.LeadSuit;
-        
+
         // FOUL: If player asks for trump but has cards of lead suit, opposing team wins the round
         if (!string.IsNullOrEmpty(leadSuit) && player.Hand.Any(c => c.Suit == leadSuit))
         {
             // Determine which team the player belongs to
             bool isFoulPlayerTeam1 = (player.Position == 0 || player.Position == 2);
-            
+
             // Award the round to the opposing team
             if (isFoulPlayerTeam1)
             {
@@ -448,7 +448,7 @@ public class GameService
                 game.Team1RoundsWon++;
                 game.WinMessage = $"FOUL! {player.Name} asked for trump but had cards of lead suit! Team 1 wins the round!";
             }
-            
+
             // Check if a team has won 10 rounds (overall game winner)
             if (game.Team1RoundsWon >= 10)
             {
@@ -460,12 +460,12 @@ public class GameService
                 game.GameWinner = "Team 2";
                 game.WinMessage += $"\n\n🎉 GAME OVER! Team 2 wins the game! (10 rounds won)";
             }
-            
+
             game.Phase = "RoundEnd";
-            
-            return new AskTrumpResult 
-            { 
-                Success = false, 
+
+            return new AskTrumpResult
+            {
+                Success = false,
                 Message = "FOUL! You have cards of lead suit. Opposing team wins the round!",
                 IsFoul = true
             };
@@ -478,11 +478,11 @@ public class GameService
 
         // Check if opposing team has trump marriage
         bool isContractorTeam1 = (game.ContractorPosition == 0 || game.ContractorPosition == 2);
-        var opposingPlayers = game.Players.Where(p => 
+        var opposingPlayers = game.Players.Where(p =>
             isContractorTeam1 ? (p.Position == 1 || p.Position == 3) : (p.Position == 0 || p.Position == 2)
         ).ToList();
 
-        game.OpposingTeamHasTrumpMarriage = opposingPlayers.Any(p => 
+        game.OpposingTeamHasTrumpMarriage = opposingPlayers.Any(p =>
             p.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "K") &&
             p.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "Q")
         );

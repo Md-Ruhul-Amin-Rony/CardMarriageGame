@@ -72,18 +72,18 @@ let unreadCount = 0;
 document.getElementById('chatToggle').addEventListener('click', () => {
     const chatBox = document.getElementById('chatBox');
     const isMinimized = chatBox.classList.contains('minimized');
-    
+
     if (isMinimized) {
         // Maximize the chat
         chatBox.classList.remove('minimized');
         unreadCount = 0;
         updateChatBadge();
     }
-    
+
     // Mobile toggle
     chatBox.classList.toggle('collapsed');
     document.body.classList.toggle('chat-open', !chatBox.classList.contains('collapsed'));
-    
+
     // Clear unread when opening
     if (!chatBox.classList.contains('collapsed')) {
         unreadCount = 0;
@@ -95,7 +95,7 @@ document.getElementById('minimizeChat').addEventListener('click', (e) => {
     e.stopPropagation();
     const chatBox = document.getElementById('chatBox');
     chatBox.classList.add('minimized');
-    
+
     // On mobile, also collapse it
     if (window.innerWidth <= 768) {
         chatBox.classList.add('collapsed');
@@ -240,7 +240,7 @@ function updateGameState(state) {
     // Get player names for teams
     const team1Players = state.players.filter(p => p.position === 0 || p.position === 2).map(p => p.name).join(' & ');
     const team2Players = state.players.filter(p => p.position === 1 || p.position === 3).map(p => p.name).join(' & ');
-    
+
     // Build bid requirement text
     let bidRequirement = '';
     if (state.contractorPosition !== undefined && state.contractorBid) {
@@ -255,7 +255,7 @@ function updateGameState(state) {
             </div>
         `;
     }
-    
+
     document.getElementById('scoreInfo').innerHTML = `
         ${bidRequirement}
         <div style="font-size: 1.1em; margin-bottom: 10px;">
@@ -348,7 +348,7 @@ function updateBidding(state) {
 function updateTrumpChoice(state) {
     const isContractor = myPosition === state.contractorPosition;
     console.log('updateTrumpChoice called. My position:', myPosition, 'Contractor position:', state.contractorPosition, 'Am I contractor?', isContractor);
-    
+
     document.querySelectorAll('.trump-btn').forEach(btn => {
         btn.disabled = !isContractor;
         if (isContractor) {
@@ -385,7 +385,7 @@ function updateTrumpChoice(state) {
 function updatePlaying(state) {
     console.log('updatePlaying - My position:', myPosition, 'Current player position:', state.currentPlayerPosition, 'My hand count:', state.yourHand?.length);
     console.log('Trump revealed?', state.trumpRevealed, 'Trump suit:', state.trumpSuit);
-    
+
     const trickDiv = document.getElementById('currentTrick');
     trickDiv.innerHTML = '<h3>Current Trick</h3><div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">';
     state.currentTrick.forEach(pc => {
@@ -403,7 +403,7 @@ function updatePlaying(state) {
     handDiv.innerHTML = '';
     const isMyTurn = myPosition === state.currentPlayerPosition;
     console.log('Is my turn?', isMyTurn);
-    
+
     if (state.yourHand) {
         const sortedHand = sortCards([...state.yourHand]);
         sortedHand.forEach(card => {
@@ -439,8 +439,8 @@ function updatePlaying(state) {
     // 2. Trump has not been revealed yet
     // 3. We're in Playing phase (trick is active)
     const canShowAskTrump = myPosition === state.currentPlayerPosition &&
-                            !state.trumpRevealed;
-    
+        !state.trumpRevealed;
+
     console.log('Ask Trump button visibility - My turn:', isMyTurn, 'Trump revealed:', state.trumpRevealed, 'Trick started:', state.currentTrick?.length >= 0, 'Show button:', canShowAskTrump);
     document.getElementById('askTrumpBtn').style.display = canShowAskTrump ? 'inline-block' : 'none';
 
@@ -451,7 +451,7 @@ function updatePlaying(state) {
 function updateRoundEnd(state) {
     const messageLines = state.winMessage ? state.winMessage.split('\n') : [];
     const isGameOver = state.gameWinner != null;
-    
+
     document.getElementById('winMessage').innerHTML = `
         <div style="white-space: pre-line;">${state.winMessage || ''}</div>
         <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px;">
@@ -462,7 +462,7 @@ function updateRoundEnd(state) {
             <p>Team 1: ${state.team1RoundsWon || 0}/10 | Team 2: ${state.team2RoundsWon || 0}/10</p>
         </div>
     `;
-    
+
     // Update button text based on whether game is over or just round
     const newRoundBtn = document.getElementById('newRoundBtn');
     if (isGameOver) {
@@ -507,9 +507,9 @@ function showMessage(message, type = 'info') {
 async function sendChatMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
-    
+
     if (!message || !currentRoomId) return;
-    
+
     try {
         await connection.invoke("SendChatMessage", currentRoomId, message);
         input.value = '';
@@ -526,25 +526,25 @@ function displayChatMessage(data) {
     messageDiv.style.background = 'white';
     messageDiv.style.borderRadius = '5px';
     messageDiv.style.borderLeft = '3px solid #2196F3';
-    
+
     messageDiv.innerHTML = `
         <div style="font-weight: bold; color: #2196F3; font-size: 0.9em;">${data.playerName}</div>
         <div style="margin-top: 3px;">${data.message}</div>
         <div style="font-size: 0.75em; color: #999; margin-top: 3px;">${data.timestamp}</div>
     `;
-    
+
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-    
+
     // Show notification if chat is minimized or collapsed
     const chatBox = document.getElementById('chatBox');
     const isMinimized = chatBox.classList.contains('minimized');
     const isCollapsed = chatBox.classList.contains('collapsed');
-    
+
     if (isMinimized || isCollapsed) {
         unreadCount++;
         updateChatBadge();
-        
+
         // Visual notification
         const chatToggle = document.getElementById('chatToggle');
         chatToggle.style.animation = 'pulse 0.5s ease-in-out 3';
