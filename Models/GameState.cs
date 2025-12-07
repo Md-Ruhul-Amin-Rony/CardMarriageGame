@@ -17,8 +17,10 @@ public class GameState
     public int Team1Points { get; set; }
     public int Team2Points { get; set; }
     public bool HasTrumpMarriage { get; set; }
+    public bool OpposingTeamHasTrumpMarriage { get; set; }
     public string? WinMessage { get; set; }
     public int Team1RoundsWon { get; set; } = 0;
     public int Team2RoundsWon { get; set; } = 0;
     public string? GameWinner { get; set; }
+    public int PlayerWhoAskedForTrump { get; set; } = -1;
 }

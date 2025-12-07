@@ -79,14 +79,26 @@ public class GameService
         DealInitialCards(game); // Deal first 4 cards to each player
 
         game.Phase = "Bidding";
-        game.CurrentBidderPosition = 0;
+        // Randomize starting player for first round, or use last trick winner for subsequent rounds
+        if (game.CurrentTrick == null || game.CurrentTrick.LeadPlayerPosition == -1)
+        {
+            var rng = new Random();
+            game.CurrentBidderPosition = rng.Next(0, 4);
+        }
+        else
+        {
+            // Use the lead player from current trick (which is the last trick winner)
+            game.CurrentBidderPosition = game.CurrentTrick.LeadPlayerPosition;
+        }
         game.TrumpRevealed = false;
+        game.PlayerWhoAskedForTrump = -1;
         game.TrumpSuit = null;
         game.Team1Points = 0;
         game.Team2Points = 0;
         game.ContractorPosition = -1;
         game.ContractorBid = 0;
         game.HasTrumpMarriage = false;
+        game.OpposingTeamHasTrumpMarriage = false;
         game.WinMessage = null;
 
         foreach (var player in game.Players)
@@ -220,9 +232,9 @@ public class GameService
         game.HasTrumpMarriage = hasKing && hasQueen;
 
         game.Phase = "Playing";
-        // First trick starts with player to the left of dealer (position 0 starts)
-        game.CurrentPlayerPosition = 0;
-        game.CurrentTrick = new Trick { LeadPlayerPosition = 0 };
+        // Use the starting player determined in StartGame (either random or previous round winner)
+        game.CurrentPlayerPosition = game.CurrentBidderPosition;
+        game.CurrentTrick = new Trick { LeadPlayerPosition = game.CurrentBidderPosition };
     }
 
     public PlayCardResult PlayCard(string roomId, string connectionId, string cardId)
@@ -258,6 +270,7 @@ public class GameService
         if (game.CurrentTrick.Cards.Count == 4)
         {
             ResolveTrick(game);
+            game.PlayerWhoAskedForTrump = -1; // Reset after trick completes
 
             if (game.Players.All(p => p.Hand.Count == 0))
             {
@@ -283,6 +296,12 @@ public class GameService
         var leadSuit = game.CurrentTrick.LeadSuit;
         bool hasLeadSuit = player.Hand.Any(c => c.Suit == leadSuit);
         bool hasTrump = game.TrumpRevealed && player.Hand.Any(c => c.Suit == game.TrumpSuit);
+
+        // Special rule: If this player asked for trump and has trump cards, they MUST play trump
+        if (game.PlayerWhoAskedForTrump == player.Position && hasTrump)
+        {
+            return card.Suit == game.TrumpSuit;
+        }
 
         if (hasLeadSuit && card.Suit != leadSuit) return false;
         if (!hasLeadSuit && hasTrump && card.Suit != game.TrumpSuit) return false;
@@ -352,7 +371,14 @@ public class GameService
             contractorTeamPoints += 4;
         }
 
-        bool contractorWins = contractorTeamPoints >= game.ContractorBid;
+        // If opposing team has trump marriage, contractor needs 4 more points to win
+        int requiredPoints = game.ContractorBid;
+        if (game.OpposingTeamHasTrumpMarriage)
+        {
+            requiredPoints += 4;
+        }
+
+        bool contractorWins = contractorTeamPoints >= requiredPoints;
 
         // Award round win to the winning team
         if (contractorWins)
@@ -362,7 +388,8 @@ public class GameService
             else
                 game.Team2RoundsWon++;
                 
-            game.WinMessage = $"Contractor (Player {game.ContractorPosition + 1}) wins! Scored {contractorTeamPoints} (bid: {game.ContractorBid})";
+            string marriageNote = game.OpposingTeamHasTrumpMarriage ? $" (Required: {requiredPoints} due to opposing marriage)" : "";
+            game.WinMessage = $"Contractor (Player {game.ContractorPosition + 1}) wins! Scored {contractorTeamPoints} (bid: {game.ContractorBid}{marriageNote})";
         }
         else
         {
@@ -372,7 +399,8 @@ public class GameService
             else
                 game.Team1RoundsWon++;
                 
-            game.WinMessage = $"Contractor (Player {game.ContractorPosition + 1}) fails! Scored {contractorTeamPoints} (bid: {game.ContractorBid})";
+            string marriageNote = game.OpposingTeamHasTrumpMarriage ? $" (Required: {requiredPoints} due to opposing marriage)" : "";
+            game.WinMessage = $"Contractor (Player {game.ContractorPosition + 1}) fails! Scored {contractorTeamPoints} (bid: {game.ContractorBid}{marriageNote})";
         }
 
         // Check if a team has won 10 rounds (overall game winner)
@@ -443,40 +471,22 @@ public class GameService
             };
         }
 
+        // Simply reveal trump - the asking player will play their own card
+        // Contractor does NOT automatically play
         game.TrumpRevealed = true;
+        game.PlayerWhoAskedForTrump = player.Position;
 
-        var contractor = game.Players[game.ContractorPosition];
-        var contractorTrumps = contractor.Hand.Where(c => c.Suit == game.TrumpSuit).ToList();
+        // Check if opposing team has trump marriage
+        bool isContractorTeam1 = (game.ContractorPosition == 0 || game.ContractorPosition == 2);
+        var opposingPlayers = game.Players.Where(p => 
+            isContractorTeam1 ? (p.Position == 1 || p.Position == 3) : (p.Position == 0 || p.Position == 2)
+        ).ToList();
 
-        if (contractorTrumps.Any())
-        {
-            var trumpToPlay = contractorTrumps.First();
-            contractor.Hand.Remove(trumpToPlay);
+        game.OpposingTeamHasTrumpMarriage = opposingPlayers.Any(p => 
+            p.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "K") &&
+            p.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "Q")
+        );
 
-            game.CurrentTrick.Cards.Add(new PlayedCard
-            {
-                PlayerPosition = game.ContractorPosition,
-                Card = trumpToPlay
-            });
-
-            if (game.CurrentTrick.Cards.Count == 1)
-            {
-                game.CurrentTrick.LeadSuit = trumpToPlay.Suit;
-            }
-
-            // Turn stays with the asking player so they can play their card
-            // Do NOT advance turn or resolve trick here - let the asking player play normally
-
-            return new AskTrumpResult
-            {
-                Success = true,
-                TrumpSuit = game.TrumpSuit,
-                ContractorPlayedTrump = true,
-                TrumpCard = trumpToPlay.GetId()
-            };
-        }
-
-        // Contractor has no trump - turn stays with asking player to play their card
         return new AskTrumpResult
         {
             Success = true,

@@ -434,14 +434,14 @@ function updatePlaying(state) {
         });
     }
 
-    // Show "Ask for Trump" button only for current player when it's their turn
-    // The server will validate if player has lead suit when they click it (foul check)
+    // Show "Ask for Trump" button when:
+    // 1. It's my turn to play a card
+    // 2. Trump has not been revealed yet
+    // 3. We're in Playing phase (trick is active)
     const canShowAskTrump = myPosition === state.currentPlayerPosition &&
-                            !state.trumpRevealed && 
-                            state.currentTrick && 
-                            state.currentTrick.length > 0;
+                            !state.trumpRevealed;
     
-    console.log('Ask Trump button visibility - My turn:', isMyTurn, 'Trump revealed:', state.trumpRevealed, 'Trick length:', state.currentTrick?.length, 'Show button:', canShowAskTrump);
+    console.log('Ask Trump button visibility - My turn:', isMyTurn, 'Trump revealed:', state.trumpRevealed, 'Trick started:', state.currentTrick?.length >= 0, 'Show button:', canShowAskTrump);
     document.getElementById('askTrumpBtn').style.display = canShowAskTrump ? 'inline-block' : 'none';
 
     const currentPlayer = state.players.find(p => p.position === state.currentPlayerPosition);
