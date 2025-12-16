@@ -9,14 +9,27 @@
 <body>
     <div id="app">
         <div id="lobby" class="screen">
-            <h1>29 Card Game</h1>
+            <h1>🎴 29 Card Game 🎴</h1>
+            <p class="subtitle">Marriage Card Game - Tournament Mode</p>
+            
             <div class="form-group">
-                <input type="text" id="playerName" placeholder="Your Name" />
-                <input type="text" id="roomId" placeholder="Room ID" />
-                <button id="joinBtn">Join Room</button>
+                <input type="text" id="playerName" placeholder="Enter Your Name" />
+                <input type="text" id="roomId" placeholder="Create or Enter Room ID" />
+                <button id="joinBtn" class="btn-primary">🚀 Join Room</button>
             </div>
+
+            <div class="room-browser">
+                <div class="room-browser-header">
+                    <h3>🏠 Active Rooms</h3>
+                    <button id="refreshRoomsBtn" class="btn-secondary">🔄 Refresh</button>
+                </div>
+                <div id="roomList" class="room-list">
+                    <p class="no-rooms">No active rooms yet. Create one above!</p>
+                </div>
+            </div>
+
             <div id="lobbyPlayers"></div>
-            <button id="startBtn" style="display:none;">Start Game</button>
+            <button id="startBtn" class="btn-success" style="display:none;">▶️ Start Game</button>
         </div>
 
         <div id="game" class="screen" style="display:none;">

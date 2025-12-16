@@ -13,6 +13,12 @@ public class GameHub : Hub
         _gameService = gameService;
     }
 
+    public async Task GetRooms()
+    {
+        var rooms = _gameService.GetAllRooms();
+        await Clients.Caller.SendAsync("RoomList", rooms);
+    }
+
     public async Task JoinRoom(string roomId, string playerName)
     {
         try
@@ -25,6 +31,18 @@ public class GameHub : Hub
         {
             await Clients.Caller.SendAsync("Error", ex.Message);
         }
+    }
+
+    public async Task ClearRoom(string roomId)
+    {
+        _gameService.ClearRoom(roomId);
+        await Clients.Group(roomId).SendAsync("RoomCleared");
+    }
+
+    public async Task ResolveTrick(string roomId)
+    {
+        _gameService.ResolveCompleteTrick(roomId);
+        await BroadcastGameState(roomId);
     }
 
     public async Task StartGame(string roomId)

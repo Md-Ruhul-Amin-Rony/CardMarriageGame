@@ -11,6 +11,18 @@ public class GameService
         return _games.ContainsKey(roomId) ? _games[roomId] : null;
     }
 
+    public List<object> GetAllRooms()
+    {
+        return _games.Select(g => new
+        {
+            RoomId = g.Key,
+            PlayerCount = g.Value.Players.Count,
+            PlayerNames = g.Value.Players.Select(p => p.Name).ToList(),
+            Phase = g.Value.Phase,
+            IsFull = g.Value.Players.Count >= 4
+        }).ToList<object>();
+    }
+
     public void ClearRoom(string roomId)
     {
         if (_games.ContainsKey(roomId))
@@ -225,11 +237,7 @@ public class GameService
         // Deal remaining 4 cards to each player after trump is chosen
         DealRemainingCards(game);
 
-        // Check for trump marriage after all cards are dealt
-        var contractor = game.Players[game.ContractorPosition];
-        bool hasKing = contractor.Hand.Any(c => c.Suit == trumpSuit && c.Rank == "K");
-        bool hasQueen = contractor.Hand.Any(c => c.Suit == trumpSuit && c.Rank == "Q");
-        game.HasTrumpMarriage = hasKing && hasQueen;
+        // Marriage will be checked when trump is revealed (not here)
 
         game.Phase = "Playing";
         // Use the starting player determined in StartGame (either random or previous round winner)
@@ -262,24 +270,14 @@ public class GameService
             game.CurrentTrick.LeadSuit = card.Suit;
         }
 
-        if (player.Position == game.ContractorPosition && card.Suit == game.TrumpSuit && !game.TrumpRevealed)
-        {
-            game.TrumpRevealed = true;
-        }
+        // Trump is NOT automatically revealed when contractor plays trump card
+        // It's only revealed when someone explicitly asks for it
 
         if (game.CurrentTrick.Cards.Count == 4)
         {
-            ResolveTrick(game);
-            game.PlayerWhoAskedForTrump = -1; // Reset after trick completes
-
-            if (game.Players.All(p => p.Hand.Count == 0))
-            {
-                EndRound(game);
-            }
-            else
-            {
-                game.CurrentTrick = new Trick { LeadPlayerPosition = game.CurrentPlayerPosition };
-            }
+            // Mark that trick is complete but not yet resolved (for UI display)
+            game.Phase = "TrickComplete";
+            return new PlayCardResult { Success = true };
         }
         else
         {
@@ -287,6 +285,25 @@ public class GameService
         }
 
         return new PlayCardResult { Success = true };
+    }
+
+    public void ResolveCompleteTrick(string roomId)
+    {
+        var game = GetGame(roomId);
+        if (game == null || game.Phase != "TrickComplete") return;
+
+        ResolveTrick(game);
+        game.PlayerWhoAskedForTrump = -1; // Reset after trick completes
+
+        if (game.Players.All(p => p.Hand.Count == 0))
+        {
+            EndRound(game);
+        }
+        else
+        {
+            game.Phase = "Playing";
+            game.CurrentTrick = new Trick { LeadPlayerPosition = game.CurrentPlayerPosition };
+        }
     }
 
     private bool IsValidPlay(GameState game, Player player, Card card)
@@ -303,8 +320,11 @@ public class GameService
             return card.Suit == game.TrumpSuit;
         }
 
+        // Normal rule: Must follow lead suit if player has it
         if (hasLeadSuit && card.Suit != leadSuit) return false;
-        if (!hasLeadSuit && hasTrump && card.Suit != game.TrumpSuit) return false;
+        
+        // Other players (who didn't ask for trump) are NOT forced to play trump
+        // They can play any card when void in lead suit
 
         return true;
     }
@@ -416,6 +436,27 @@ public class GameService
         }
     }
 
+    private void CheckMarriages(GameState game)
+    {
+        bool isContractorTeam1 = (game.ContractorPosition == 0 || game.ContractorPosition == 2);
+        
+        // Check contractor's marriage
+        var contractor = game.Players[game.ContractorPosition];
+        bool contractorHasKing = contractor.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "K");
+        bool contractorHasQueen = contractor.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "Q");
+        game.HasTrumpMarriage = contractorHasKing && contractorHasQueen;
+
+        // Check opposing team's marriage
+        var opposingPlayers = game.Players.Where(p =>
+            isContractorTeam1 ? (p.Position == 1 || p.Position == 3) : (p.Position == 0 || p.Position == 2)
+        ).ToList();
+
+        game.OpposingTeamHasTrumpMarriage = opposingPlayers.Any(p =>
+            p.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "K") &&
+            p.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "Q")
+        );
+    }
+
     public AskTrumpResult AskForTrump(string roomId, string connectionId)
     {
         var game = GetGame(roomId);
@@ -428,6 +469,10 @@ public class GameService
 
         if (game.TrumpRevealed)
             return new AskTrumpResult { Success = false, Message = "Trump already revealed" };
+
+        // Cannot ask for trump when leading the trick (starting it)
+        if (game.CurrentTrick.Cards.Count == 0)
+            return new AskTrumpResult { Success = false, Message = "Cannot ask for trump when leading the trick" };
 
         var leadSuit = game.CurrentTrick.LeadSuit;
 
@@ -476,16 +521,8 @@ public class GameService
         game.TrumpRevealed = true;
         game.PlayerWhoAskedForTrump = player.Position;
 
-        // Check if opposing team has trump marriage
-        bool isContractorTeam1 = (game.ContractorPosition == 0 || game.ContractorPosition == 2);
-        var opposingPlayers = game.Players.Where(p =>
-            isContractorTeam1 ? (p.Position == 1 || p.Position == 3) : (p.Position == 0 || p.Position == 2)
-        ).ToList();
-
-        game.OpposingTeamHasTrumpMarriage = opposingPlayers.Any(p =>
-            p.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "K") &&
-            p.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "Q")
-        );
+        // Check marriages for both teams when trump is revealed
+        CheckMarriages(game);
 
         return new AskTrumpResult
         {

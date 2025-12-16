@@ -46,13 +46,68 @@ function initConnection() {
     connection.on("Error", showError);
     connection.on("TrumpAsked", handleTrumpAsked);
     connection.on("ReceiveChatMessage", displayChatMessage);
+    connection.on("RoomList", updateRoomList);
+    connection.on("RoomCleared", handleRoomCleared);
 
     connection.start()
-        .then(() => console.log('SignalR Connected'))
+        .then(() => {
+            console.log('SignalR Connected');
+            loadRooms();
+        })
         .catch(err => {
             console.error('SignalR Connection Error:', err);
             showError('Failed to connect to server. Please refresh the page.');
         });
+}
+
+function loadRooms() {
+    if (connection && connection.state === 'Connected') {
+        connection.invoke("GetRooms").catch(err => console.error('Get Rooms Error:', err));
+    }
+}
+
+function updateRoomList(rooms) {
+    const roomListDiv = document.getElementById('roomList');
+    
+    if (!rooms || rooms.length === 0) {
+        roomListDiv.innerHTML = '<p class="no-rooms">No active rooms yet. Create one above!</p>';
+        return;
+    }
+
+    roomListDiv.innerHTML = rooms.map(room => `
+        <div class="room-card ${room.isFull ? 'full' : ''}" onclick="${room.isFull ? '' : `joinRoomById('${room.roomId}')`}">
+            <div class="room-info">
+                <div class="room-id">🎮 Room: ${room.roomId}</div>
+                <div class="room-players">
+                    <span>👥 ${room.playerCount}/4 players</span>
+                    ${room.playerNames.length > 0 ? `<br><span class="player-names">${room.playerNames.join(', ')}</span>` : ''}
+                </div>
+            </div>
+            <div class="room-status ${room.isFull ? 'full' : (room.phase === 'Playing' ? 'playing' : 'waiting')}">
+                ${room.isFull ? '🔒 FULL' : (room.phase === 'Waiting' ? '🟢 JOIN' : '🎯 PLAYING')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function joinRoomById(roomId) {
+    const playerNameInput = document.getElementById('playerName');
+    const roomIdInput = document.getElementById('roomId');
+    
+    if (!playerNameInput.value.trim()) {
+        showError('Please enter your name first');
+        return;
+    }
+    
+    roomIdInput.value = roomId;
+    joinRoom();
+}
+
+function handleRoomCleared() {
+    showMessage('Game ended. Room has been cleared. Returning to lobby...');
+    setTimeout(() => {
+        location.reload();
+    }, 2000);
 }
 
 document.getElementById('joinBtn').addEventListener('click', joinRoom);
@@ -64,6 +119,10 @@ document.getElementById('newRoundBtn').addEventListener('click', startGame);
 document.getElementById('sendChatBtn').addEventListener('click', sendChatMessage);
 document.getElementById('chatInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') sendChatMessage();
+});
+document.getElementById('refreshRoomsBtn').addEventListener('click', () => {
+    loadRooms();
+    showMessage('🔄 Refreshing rooms...');
 });
 
 // Chat toggle for mobile and minimize/maximize functionality
@@ -283,7 +342,7 @@ function updateGameState(state) {
 
         document.getElementById('biddingSection').style.display = state.phase === 'Bidding' ? 'block' : 'none';
         document.getElementById('trumpChoiceSection').style.display = state.phase === 'ChooseTrump' ? 'block' : 'none';
-        document.getElementById('playingSection').style.display = state.phase === 'Playing' ? 'block' : 'none';
+        document.getElementById('playingSection').style.display = (state.phase === 'Playing' || state.phase === 'TrickComplete') ? 'block' : 'none';
         document.getElementById('roundEndSection').style.display = state.phase === 'RoundEnd' ? 'block' : 'none';
 
         if (state.phase === 'Bidding') {
@@ -292,6 +351,8 @@ function updateGameState(state) {
             updateTrumpChoice(state);
         } else if (state.phase === 'Playing') {
             updatePlaying(state);
+        } else if (state.phase === 'TrickComplete') {
+            updateTrickComplete(state);
         } else if (state.phase === 'RoundEnd') {
             updateRoundEnd(state);
         }
@@ -437,15 +498,44 @@ function updatePlaying(state) {
     // Show "Ask for Trump" button when:
     // 1. It's my turn to play a card
     // 2. Trump has not been revealed yet
-    // 3. We're in Playing phase (trick is active)
+    // 3. At least one card has been played (not leading the trick)
     const canShowAskTrump = myPosition === state.currentPlayerPosition &&
-        !state.trumpRevealed;
+        !state.trumpRevealed &&
+        state.currentTrick && state.currentTrick.length > 0;
 
-    console.log('Ask Trump button visibility - My turn:', isMyTurn, 'Trump revealed:', state.trumpRevealed, 'Trick started:', state.currentTrick?.length >= 0, 'Show button:', canShowAskTrump);
+    console.log('Ask Trump button visibility - My turn:', isMyTurn, 'Trump revealed:', state.trumpRevealed, 'Trick cards:', state.currentTrick?.length, 'Show button:', canShowAskTrump);
     document.getElementById('askTrumpBtn').style.display = canShowAskTrump ? 'inline-block' : 'none';
 
     const currentPlayer = state.players.find(p => p.position === state.currentPlayerPosition);
     document.getElementById('phaseInfo').innerHTML = `Playing - Current Turn: <strong style="color: ${isMyTurn ? '#4CAF50' : '#333'};">${currentPlayer ? currentPlayer.name : ''}</strong>${isMyTurn ? ' (YOUR TURN!)' : ''}`;
+}
+
+function updateTrickComplete(state) {
+    // Show all 4 cards for 3 seconds before resolving
+    console.log('Trick Complete! Showing all cards...');
+    
+    const trickDiv = document.getElementById('currentTrick');
+    trickDiv.innerHTML = '<h3>🎯 Trick Complete!</h3><div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; animation: cardReveal 0.5s ease-in-out;">';
+    state.currentTrick.forEach(pc => {
+        const player = state.players.find(p => p.position === pc.playerPosition);
+        trickDiv.innerHTML += `
+            <div class="played-card" style="text-align: center; padding: 15px; border: 3px solid #FFD700; border-radius: 10px; background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%); animation: cardFlip 0.6s ease;">
+                <div style="font-weight: bold; margin-bottom: 8px; color: #667eea;">${player.name}</div>
+                <div style="font-size: 2.2em;">${renderCard(pc.card)}</div>
+            </div>
+        `;
+    });
+    trickDiv.innerHTML += '</div><p style="text-align: center; margin-top: 15px; color: #764ba2; font-weight: bold; animation: blink 1s infinite;">⏳ Calculating winner...</p>';
+
+    // Hide hand and ask trump button during trick resolution
+    document.getElementById('handCards').style.opacity = '0.5';
+    document.getElementById('askTrumpBtn').style.display = 'none';
+    document.getElementById('phaseInfo').innerHTML = '🎲 Resolving trick...';
+
+    // After 3 seconds, resolve the trick
+    setTimeout(() => {
+        connection.invoke("ResolveTrick", currentRoomId).catch(err => console.error('Resolve Trick Error:', err));
+    }, 3000);
 }
 
 function updateRoundEnd(state) {
@@ -466,15 +556,24 @@ function updateRoundEnd(state) {
     // Update button text based on whether game is over or just round
     const newRoundBtn = document.getElementById('newRoundBtn');
     if (isGameOver) {
-        newRoundBtn.textContent = 'Start New Game';
-        newRoundBtn.style.background = '#4CAF50';
+        newRoundBtn.textContent = '🏆 Game Over - Return to Lobby';
+        newRoundBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
         newRoundBtn.style.fontSize = '1.2em';
         newRoundBtn.style.padding = '15px 30px';
+        newRoundBtn.onclick = () => {
+            connection.invoke("ClearRoom", currentRoomId)
+                .then(() => {
+                    showMessage('🎉 Thanks for playing! Returning to lobby...');
+                    setTimeout(() => location.reload(), 1500);
+                })
+                .catch(err => console.error('Clear Room Error:', err));
+        };
     } else {
-        newRoundBtn.textContent = 'Next Round';
+        newRoundBtn.textContent = '▶️ Next Round';
         newRoundBtn.style.background = '';
         newRoundBtn.style.fontSize = '';
         newRoundBtn.style.padding = '';
+        newRoundBtn.onclick = startGame;
     }
 }
 
