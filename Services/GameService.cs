@@ -322,7 +322,7 @@ public class GameService
 
         // Normal rule: Must follow lead suit if player has it
         if (hasLeadSuit && card.Suit != leadSuit) return false;
-        
+
         // Other players (who didn't ask for trump) are NOT forced to play trump
         // They can play any card when void in lead suit
 
@@ -439,7 +439,7 @@ public class GameService
     private void CheckMarriages(GameState game)
     {
         bool isContractorTeam1 = (game.ContractorPosition == 0 || game.ContractorPosition == 2);
-        
+
         // Check contractor's marriage
         var contractor = game.Players[game.ContractorPosition];
         bool contractorHasKing = contractor.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "K");

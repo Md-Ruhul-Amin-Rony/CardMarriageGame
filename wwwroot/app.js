@@ -68,7 +68,7 @@ function loadRooms() {
 
 function updateRoomList(rooms) {
     const roomListDiv = document.getElementById('roomList');
-    
+
     if (!rooms || rooms.length === 0) {
         roomListDiv.innerHTML = '<p class="no-rooms">No active rooms yet. Create one above!</p>';
         return;
@@ -93,12 +93,12 @@ function updateRoomList(rooms) {
 function joinRoomById(roomId) {
     const playerNameInput = document.getElementById('playerName');
     const roomIdInput = document.getElementById('roomId');
-    
+
     if (!playerNameInput.value.trim()) {
         showError('Please enter your name first');
         return;
     }
-    
+
     roomIdInput.value = roomId;
     joinRoom();
 }
@@ -513,7 +513,7 @@ function updatePlaying(state) {
 function updateTrickComplete(state) {
     // Show all 4 cards for 3 seconds before resolving
     console.log('Trick Complete! Showing all cards...');
-    
+
     const trickDiv = document.getElementById('currentTrick');
     trickDiv.innerHTML = '<h3>🎯 Trick Complete!</h3><div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; animation: cardReveal 0.5s ease-in-out;">';
     state.currentTrick.forEach(pc => {

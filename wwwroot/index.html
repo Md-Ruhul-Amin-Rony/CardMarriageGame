@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>29 Card Game</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div id="app">
         <div id="lobby" class="screen">
             <h1>🎴 29 Card Game 🎴</h1>
             <p class="subtitle">Marriage Card Game - Tournament Mode</p>
-            
+
             <div class="form-group">
                 <input type="text" id="playerName" placeholder="Enter Your Name" />
                 <input type="text" id="roomId" placeholder="Create or Enter Room ID" />
@@ -65,9 +67,12 @@
                     <div id="currentTrick"></div>
                 </div>
                 <div id="hand">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <h3 style="margin: 0;">Your Hand</h3>
-                        <button id="askTrumpBtn" class="btn" style="display:none; background: #FF9800; color: white; padding: 10px 20px; font-size: 14px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer;">Ask for Trump 🃏</button>
+                        <button id="askTrumpBtn" class="btn"
+                            style="display:none; background: #FF9800; color: white; padding: 10px 20px; font-size: 14px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer;">Ask
+                            for Trump 🃏</button>
                     </div>
                     <div id="handCards"></div>
                 </div>
@@ -84,7 +89,8 @@
 
         <!-- Chat Box -->
         <div id="chatBox" class="chat-box">
-            <button id="chatToggle" class="chat-toggle">💬 Game Chat<span id="chatBadge" class="chat-badge" style="display:none;">0</span></button>
+            <button id="chatToggle" class="chat-toggle">💬 Game Chat<span id="chatBadge" class="chat-badge"
+                    style="display:none;">0</span></button>
             <div id="chatContent" class="chat-content">
                 <div class="chat-header">
                     <span>💬 Game Chat</span>
@@ -104,4 +110,5 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>
