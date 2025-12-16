@@ -287,16 +287,41 @@ h3 {
     font-size: 1.2em;
     padding: 15px 30px;
     font-weight: bold;
+}
+
+.btn-success:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(56, 239, 125, 0.4);
+}
+
+/* Double Challenge Section */
+#doubleChallengeSection {
+    text-align: center;
+    animation: fadeIn 0.6s ease-in;
+}
+
+#doubleChallengeSection h2 {
+    color: #f5576c;
+    font-size: 2em;
+    text-shadow: 2px 2px 4px rgba(245, 87, 108, 0.2);
     animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
+#acceptDoubleBtn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    animation: pulse 2s infinite;
+}
 
-    0%,
-    100% {
+#acceptDoubleBtn:hover {
+    animation: none;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 30px rgba(245, 87, 108, 0.5);
+}
+
+@keyframes pulse {
+    0%, 100% {
         transform: scale(1);
     }
-
     50% {
         transform: scale(1.05);
     }
@@ -384,11 +409,32 @@ button:disabled {
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
     max-width: 400px;
+    margin: 0 auto;
 }
 
 .trump-btn {
     padding: 20px;
     font-size: 18px;
+    transition: all 0.3s ease;
+}
+
+.trump-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+.trump-7a {
+    grid-column: span 2;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.trump-7a:hover:not(:disabled) {
+    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
 }
 
 #table {

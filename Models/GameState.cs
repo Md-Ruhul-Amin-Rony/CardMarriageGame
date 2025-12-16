@@ -23,4 +23,5 @@ public class GameState
     public int Team2RoundsWon { get; set; } = 0;
     public string? GameWinner { get; set; }
     public int PlayerWhoAskedForTrump { get; set; } = -1;
+    public bool IsDoubled { get; set; } = false;
 }

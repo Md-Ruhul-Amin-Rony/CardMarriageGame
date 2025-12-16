@@ -51,6 +51,12 @@ public class GameHub : Hub
         await BroadcastGameState(roomId);
     }
 
+    public async Task RespondToDouble(string roomId, bool acceptDouble)
+    {
+        _gameService.RespondToDoubleChallenge(roomId, Context.ConnectionId, acceptDouble);
+        await BroadcastGameState(roomId);
+    }
+
     public async Task PlaceBid(string roomId, int? bid)
     {
         _gameService.PlaceBid(roomId, Context.ConnectionId, bid);
@@ -59,7 +65,24 @@ public class GameHub : Hub
 
     public async Task ChooseTrump(string roomId, string trumpSuit)
     {
+        var game = _gameService.GetGame(roomId);
+        var oldTrumpSuit = game?.TrumpSuit;
+        
         _gameService.ChooseTrump(roomId, Context.ConnectionId, trumpSuit);
+        
+        // If 7a was chosen, announce what the trump became
+        if (trumpSuit == "7a")
+        {
+            game = _gameService.GetGame(roomId);
+            if (game != null && game.TrumpSuit != null)
+            {
+                await Clients.Group(roomId).SendAsync("TrumpChosen7a", new
+                {
+                    TrumpSuit = game.TrumpSuit
+                });
+            }
+        }
+        
         await BroadcastGameState(roomId);
     }
 

@@ -45,6 +45,7 @@ function initConnection() {
     connection.on("GameState", updateGameState);
     connection.on("Error", showError);
     connection.on("TrumpAsked", handleTrumpAsked);
+    connection.on("TrumpChosen7a", handleTrumpChosen7a);
     connection.on("ReceiveChatMessage", displayChatMessage);
     connection.on("RoomList", updateRoomList);
     connection.on("RoomCleared", handleRoomCleared);
@@ -114,6 +115,8 @@ document.getElementById('joinBtn').addEventListener('click', joinRoom);
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('placeBidBtn').addEventListener('click', placeBid);
 document.getElementById('passBtn').addEventListener('click', passBid);
+document.getElementById('acceptDoubleBtn').addEventListener('click', () => respondToDouble(true));
+document.getElementById('declineDoubleBtn').addEventListener('click', () => respondToDouble(false));
 document.getElementById('askTrumpBtn').addEventListener('click', askForTrump);
 document.getElementById('newRoundBtn').addEventListener('click', startGame);
 document.getElementById('sendChatBtn').addEventListener('click', sendChatMessage);
@@ -229,6 +232,17 @@ async function passBid() {
     await connection.invoke("PlaceBid", currentRoomId, null);
 }
 
+async function respondToDouble(accept) {
+    console.log('Responding to double:', accept);
+    try {
+        await connection.invoke("RespondToDouble", currentRoomId, accept);
+        console.log('Double response sent');
+    } catch (err) {
+        console.error('Error responding to double:', err);
+        alert('Failed to respond: ' + err.message);
+    }
+}
+
 async function chooseTrump(suit) {
     console.log('Choosing trump suit:', suit, 'Room:', currentRoomId, 'My position:', myPosition);
     try {
@@ -342,12 +356,15 @@ function updateGameState(state) {
         document.getElementById('game').style.display = 'block';
 
         document.getElementById('biddingSection').style.display = state.phase === 'Bidding' ? 'block' : 'none';
+        document.getElementById('doubleChallengeSection').style.display = state.phase === 'DoubleChallenge' ? 'block' : 'none';
         document.getElementById('trumpChoiceSection').style.display = state.phase === 'ChooseTrump' ? 'block' : 'none';
         document.getElementById('playingSection').style.display = (state.phase === 'Playing' || state.phase === 'TrickComplete') ? 'block' : 'none';
         document.getElementById('roundEndSection').style.display = state.phase === 'RoundEnd' ? 'block' : 'none';
 
         if (state.phase === 'Bidding') {
             updateBidding(state);
+        } else if (state.phase === 'DoubleChallenge') {
+            updateDoubleChallenge(state);
         } else if (state.phase === 'ChooseTrump') {
             updateTrumpChoice(state);
         } else if (state.phase === 'Playing') {
@@ -369,6 +386,41 @@ function updateLobby(state) {
     document.getElementById('startBtn').style.display =
         state.players.length === 4 ? 'block' : 'none';
     console.log('Start button display:', document.getElementById('startBtn').style.display);
+}
+
+function updateDoubleChallenge(state) {
+    const me = state.players.find(p => p.isYou);
+    const contractor = state.players.find(p => p.position === state.contractorPosition);
+    
+    // Check if I'm on the opposing team
+    const isContractorTeam1 = (state.contractorPosition === 0 || state.contractorPosition === 2);
+    const isMyTeamOpposing = isContractorTeam1 ? 
+        (myPosition === 1 || myPosition === 3) : 
+        (myPosition === 0 || myPosition === 2);
+
+    const team1Players = state.players.filter(p => p.position === 0 || p.position === 2).map(p => p.name).join(' & ');
+    const team2Players = state.players.filter(p => p.position === 1 || p.position === 3).map(p => p.name).join(' & ');
+    const opposingTeamNames = isContractorTeam1 ? team2Players : team1Players;
+
+    document.getElementById('doubleInfo').innerHTML = `
+        <h3 style="color: #764ba2; margin-bottom: 15px;">💰 Bidding Complete!</h3>
+        <p><strong>Contractor:</strong> ${contractor.name} (Bid: ${state.contractorBid} points)</p>
+        <p style="margin-top: 10px;"><strong>Opposing Team:</strong> ${opposingTeamNames}</p>
+        <hr style="margin: 15px 0; border-color: #ffc107;">
+        <p style="font-size: 0.95em; color: #666;">The opposing team can now choose to <strong style="color: #f5576c;">DOUBLE</strong> the stakes!</p>
+    `;
+
+    // Only show buttons to opposing team members
+    document.getElementById('acceptDoubleBtn').style.display = isMyTeamOpposing ? 'inline-block' : 'none';
+    document.getElementById('declineDoubleBtn').style.display = isMyTeamOpposing ? 'inline-block' : 'none';
+
+    if (!isMyTeamOpposing) {
+        document.getElementById('doubleInfo').innerHTML += `
+            <p style="margin-top: 15px; text-align: center; color: #999; font-style: italic;">
+                ⏳ Waiting for opposing team to decide...
+            </p>
+        `;
+    }
 }
 
 function updateBidding(state) {
@@ -587,6 +639,10 @@ function renderCard(card) {
 function handleTrumpAsked(data) {
     showMessage(`Trump revealed: ${suitSymbols[data.trumpSuit]} ${data.trumpSuit}! ` +
         (data.contractorPlayedTrump ? `Contractor played ${data.trumpCard}` : 'Contractor has no trump'));
+}
+
+function handleTrumpChosen7a(data) {
+    showMessage(`🎲 7a Card revealed! Trump is: ${suitSymbols[data.trumpSuit]} ${data.trumpSuit}`);
 }
 
 function showError(message) {

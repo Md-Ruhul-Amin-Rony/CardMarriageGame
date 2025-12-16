@@ -111,6 +111,7 @@ public class GameService
         game.ContractorBid = 0;
         game.HasTrumpMarriage = false;
         game.OpposingTeamHasTrumpMarriage = false;
+        game.IsDoubled = false;
         game.WinMessage = null;
 
         foreach (var player in game.Players)
@@ -205,7 +206,7 @@ public class GameService
             var contractor = game.Players.First(p => !p.HasPassed);
             game.ContractorPosition = contractor.Position;
             game.ContractorBid = contractor.CurrentBid ?? 16;
-            game.Phase = "ChooseTrump";
+            game.Phase = "DoubleChallenge"; // New phase for opposing team to decide
         }
         else
         {
@@ -223,6 +224,26 @@ public class GameService
         return next;
     }
 
+    public void RespondToDoubleChallenge(string roomId, string connectionId, bool acceptDouble)
+    {
+        var game = GetGame(roomId);
+        if (game == null || game.Phase != "DoubleChallenge") return;
+
+        var player = game.Players.FirstOrDefault(p => p.ConnectionId == connectionId);
+        if (player == null) return;
+
+        // Only opposing team members can respond
+        bool isContractorTeam1 = (game.ContractorPosition == 0 || game.ContractorPosition == 2);
+        bool isPlayerOpposingTeam = isContractorTeam1 ? 
+            (player.Position == 1 || player.Position == 3) : 
+            (player.Position == 0 || player.Position == 2);
+
+        if (!isPlayerOpposingTeam) return;
+
+        game.IsDoubled = acceptDouble;
+        game.Phase = "ChooseTrump";
+    }
+
     public void ChooseTrump(string roomId, string connectionId, string trumpSuit)
     {
         var game = GetGame(roomId);
@@ -231,7 +252,28 @@ public class GameService
         var player = game.Players.FirstOrDefault(p => p.ConnectionId == connectionId);
         if (player == null || player.Position != game.ContractorPosition) return;
 
-        game.TrumpSuit = trumpSuit;
+        // Check if "7a" option is selected (7th card determines trump)
+        if (trumpSuit == "7a")
+        {
+            // The 7th card in the deck determines the trump suit
+            // Cards dealt: 4 to each player = 16 cards used
+            // So 7th card is at index 6 in remaining deck
+            if (game.Deck.Count > 6)
+            {
+                var seventhCard = game.Deck[6];
+                game.TrumpSuit = seventhCard.Suit;
+            }
+            else
+            {
+                // Fallback if deck doesn't have enough cards (shouldn't happen)
+                game.TrumpSuit = game.Deck[0].Suit;
+            }
+        }
+        else
+        {
+            game.TrumpSuit = trumpSuit;
+        }
+        
         game.TrumpRevealed = false;
 
         // Deal remaining 4 cards to each player after trump is chosen
@@ -400,27 +442,31 @@ public class GameService
 
         bool contractorWins = contractorTeamPoints >= requiredPoints;
 
+        // Determine rounds to award (1 normal, 2 if doubled)
+        int roundsToAward = game.IsDoubled ? 2 : 1;
+        string doubleNote = game.IsDoubled ? " 🔥 DOUBLED! (2 rounds)" : "";
+
         // Award round win to the winning team
         if (contractorWins)
         {
             if (isContractorTeam1)
-                game.Team1RoundsWon++;
+                game.Team1RoundsWon += roundsToAward;
             else
-                game.Team2RoundsWon++;
+                game.Team2RoundsWon += roundsToAward;
 
             string marriageNote = game.OpposingTeamHasTrumpMarriage ? $" (Required: {requiredPoints} due to opposing marriage)" : "";
-            game.WinMessage = $"Contractor (Player {game.ContractorPosition + 1}) wins! Scored {contractorTeamPoints} (bid: {game.ContractorBid}{marriageNote})";
+            game.WinMessage = $"Contractor (Player {game.ContractorPosition + 1}) wins! Scored {contractorTeamPoints} (bid: {game.ContractorBid}{marriageNote}){doubleNote}";
         }
         else
         {
             // Opposing team wins the round
             if (isContractorTeam1)
-                game.Team2RoundsWon++;
+                game.Team2RoundsWon += roundsToAward;
             else
-                game.Team1RoundsWon++;
+                game.Team1RoundsWon += roundsToAward;
 
             string marriageNote = game.OpposingTeamHasTrumpMarriage ? $" (Required: {requiredPoints} due to opposing marriage)" : "";
-            game.WinMessage = $"Contractor (Player {game.ContractorPosition + 1}) fails! Scored {contractorTeamPoints} (bid: {game.ContractorBid}{marriageNote})";
+            game.WinMessage = $"Contractor (Player {game.ContractorPosition + 1}) fails! Scored {contractorTeamPoints} (bid: {game.ContractorBid}{marriageNote}){doubleNote}";
         }
 
         // Check if a team has won 10 rounds (overall game winner)
