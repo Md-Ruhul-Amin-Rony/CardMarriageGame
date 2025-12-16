@@ -234,8 +234,8 @@ public class GameService
 
         // Only opposing team members can respond
         bool isContractorTeam1 = (game.ContractorPosition == 0 || game.ContractorPosition == 2);
-        bool isPlayerOpposingTeam = isContractorTeam1 ? 
-            (player.Position == 1 || player.Position == 3) : 
+        bool isPlayerOpposingTeam = isContractorTeam1 ?
+            (player.Position == 1 || player.Position == 3) :
             (player.Position == 0 || player.Position == 2);
 
         if (!isPlayerOpposingTeam) return;
@@ -273,7 +273,7 @@ public class GameService
         {
             game.TrumpSuit = trumpSuit;
         }
-        
+
         game.TrumpRevealed = false;
 
         // Deal remaining 4 cards to each player after trump is chosen

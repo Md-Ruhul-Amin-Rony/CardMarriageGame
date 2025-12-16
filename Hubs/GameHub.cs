@@ -67,9 +67,9 @@ public class GameHub : Hub
     {
         var game = _gameService.GetGame(roomId);
         var oldTrumpSuit = game?.TrumpSuit;
-        
+
         _gameService.ChooseTrump(roomId, Context.ConnectionId, trumpSuit);
-        
+
         // If 7a was chosen, announce what the trump became
         if (trumpSuit == "7a")
         {
@@ -82,7 +82,7 @@ public class GameHub : Hub
                 });
             }
         }
-        
+
         await BroadcastGameState(roomId);
     }
 

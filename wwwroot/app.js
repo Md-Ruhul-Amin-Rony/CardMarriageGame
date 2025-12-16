@@ -391,11 +391,11 @@ function updateLobby(state) {
 function updateDoubleChallenge(state) {
     const me = state.players.find(p => p.isYou);
     const contractor = state.players.find(p => p.position === state.contractorPosition);
-    
+
     // Check if I'm on the opposing team
     const isContractorTeam1 = (state.contractorPosition === 0 || state.contractorPosition === 2);
-    const isMyTeamOpposing = isContractorTeam1 ? 
-        (myPosition === 1 || myPosition === 3) : 
+    const isMyTeamOpposing = isContractorTeam1 ?
+        (myPosition === 1 || myPosition === 3) :
         (myPosition === 0 || myPosition === 2);
 
     const team1Players = state.players.filter(p => p.position === 0 || p.position === 2).map(p => p.name).join(' & ');
