@@ -278,6 +278,9 @@ function updateGameState(state) {
     if (me) myPosition = me.position !== undefined ? me.position : me.Position;
     console.log('My position:', myPosition, 'Phase:', state.phase || state.Phase);
 
+    // Update player positions on the table
+    updatePlayerPositions(state);
+
     // Activate chat box after joining room (start minimized)
     const chatBox = document.getElementById('chatBox');
     if (!chatBox.classList.contains('active')) {
@@ -642,7 +645,7 @@ function handleTrumpAsked(data) {
 }
 
 function handleTrumpChosen7a(data) {
-    showMessage(`🎲 7a Card revealed! Trump is: ${suitSymbols[data.trumpSuit]} ${data.trumpSuit}`);
+    showMessage(`🎲 7a Card selected! You are the contractor. Trump is: ${suitSymbols[data.trumpSuit]} ${data.trumpSuit} (Only you know this)`);
 }
 
 function showError(message) {
@@ -708,6 +711,77 @@ function displayChatMessage(data) {
             chatToggle.style.animation = '';
         }, 1500);
     }
+}
+
+function updatePlayerPositions(state) {
+    if (!state.players || state.players.length === 0) return;
+
+    // Generate avatar initial from name
+    function getAvatar(name) {
+        if (!name) return '👤';
+        return name.charAt(0).toUpperCase();
+    }
+
+    // Get avatar color based on position
+    function getAvatarColor(position) {
+        const colors = [
+            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',  // Position 0 - Purple
+            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',  // Position 1 - Pink
+            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',  // Position 2 - Blue
+            'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'   // Position 3 - Green
+        ];
+        return colors[position] || colors[0];
+    }
+
+    state.players.forEach(player => {
+        const position = player.position !== undefined ? player.position : player.Position;
+        const playerDiv = document.getElementById(`player-${position}`);
+        if (!playerDiv) return;
+
+        const avatarDiv = playerDiv.querySelector('.player-avatar');
+        const nameDiv = playerDiv.querySelector('.player-name');
+        const cardCountDiv = playerDiv.querySelector('.player-card-count');
+
+        // Update avatar
+        avatarDiv.textContent = getAvatar(player.name);
+        avatarDiv.style.background = getAvatarColor(position);
+
+        // Update name
+        const isYou = player.isYou || player.IsYou;
+        nameDiv.textContent = isYou ? `${player.name} (You)` : player.name;
+
+        // Update card count
+        const handCount = player.handCount !== undefined ? player.handCount : player.HandCount;
+        cardCountDiv.textContent = handCount ? `${handCount} cards` : '';
+
+        // Add team badge if not already present
+        let teamBadge = playerDiv.querySelector('.player-team-badge');
+        if (!teamBadge) {
+            teamBadge = document.createElement('div');
+            teamBadge.className = 'player-team-badge';
+            playerDiv.appendChild(teamBadge);
+        }
+        
+        const isTeam1 = position === 0 || position === 2;
+        teamBadge.className = `player-team-badge ${isTeam1 ? 'team1-badge' : 'team2-badge'}`;
+        teamBadge.textContent = isTeam1 ? 'Team 1' : 'Team 2';
+
+        // Highlight current player's turn
+        const currentPlayerPosition = state.currentPlayerPosition !== undefined ? state.currentPlayerPosition : state.CurrentPlayerPosition;
+        if (position === currentPlayerPosition) {
+            playerDiv.classList.add('active-turn');
+        } else {
+            playerDiv.classList.remove('active-turn');
+        }
+
+        // Highlight contractor
+        const contractorPosition = state.contractorPosition !== undefined ? state.contractorPosition : state.ContractorPosition;
+        if (position === contractorPosition) {
+            playerDiv.classList.add('contractor');
+        } else {
+            playerDiv.classList.remove('contractor');
+        }
+    });
 }
 
 initConnection();

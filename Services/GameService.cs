@@ -255,18 +255,22 @@ public class GameService
         // Check if "7a" option is selected (7th card determines trump)
         if (trumpSuit == "7a")
         {
-            // The 7th card in the deck determines the trump suit
-            // Cards dealt: 4 to each player = 16 cards used
-            // So 7th card is at index 6 in remaining deck
-            if (game.Deck.Count > 6)
+            // The 7th card = contractor's 3rd card from the second batch
+            // First 16 cards (4 per player) already dealt at indices 0-15
+            // Remaining 16 cards start at index 16
+            // Contractor gets 4 cards from second batch based on position
+            // 7th card overall = 4 (initial) + 3 (from second batch)
+            // Index = 16 + (contractor position * 4) + 2
+            int seventhCardIndex = 16 + (game.ContractorPosition * 4) + 2;
+            if (game.Deck.Count > seventhCardIndex)
             {
-                var seventhCard = game.Deck[6];
+                var seventhCard = game.Deck[seventhCardIndex];
                 game.TrumpSuit = seventhCard.Suit;
             }
             else
             {
                 // Fallback if deck doesn't have enough cards (shouldn't happen)
-                game.TrumpSuit = game.Deck[0].Suit;
+                game.TrumpSuit = game.Deck[16].Suit;
             }
         }
         else
@@ -332,7 +336,11 @@ public class GameService
     public void ResolveCompleteTrick(string roomId)
     {
         var game = GetGame(roomId);
+        // Check if phase is TrickComplete to prevent duplicate calls
         if (game == null || game.Phase != "TrickComplete") return;
+
+        // Immediately change phase to prevent race condition (multiple clients calling this)
+        game.Phase = "Resolving";
 
         ResolveTrick(game);
         game.PlayerWhoAskedForTrump = -1; // Reset after trick completes

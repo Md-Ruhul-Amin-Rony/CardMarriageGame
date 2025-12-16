@@ -65,18 +65,15 @@ public class GameHub : Hub
 
     public async Task ChooseTrump(string roomId, string trumpSuit)
     {
-        var game = _gameService.GetGame(roomId);
-        var oldTrumpSuit = game?.TrumpSuit;
-
         _gameService.ChooseTrump(roomId, Context.ConnectionId, trumpSuit);
 
-        // If 7a was chosen, announce what the trump became
+        // If 7a was chosen, inform only the contractor (not revealing the trump suit to others)
         if (trumpSuit == "7a")
         {
-            game = _gameService.GetGame(roomId);
+            var game = _gameService.GetGame(roomId);
             if (game != null && game.TrumpSuit != null)
             {
-                await Clients.Group(roomId).SendAsync("TrumpChosen7a", new
+                await Clients.Caller.SendAsync("TrumpChosen7a", new
                 {
                     TrumpSuit = game.TrumpSuit
                 });
