@@ -608,7 +608,7 @@ button:disabled {
     margin: 20px auto;
     background: linear-gradient(135deg, #1e8449 0%, #229954 100%);
     border-radius: 50%;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     border: 8px solid #8B4513;
 }
 
@@ -721,8 +721,15 @@ button:disabled {
 }
 
 @keyframes pulse {
-    0%, 100% { transform: translateY(-50%) scale(1); }
-    50% { transform: translateY(-50%) scale(1.05); }
+
+    0%,
+    100% {
+        transform: translateY(-50%) scale(1);
+    }
+
+    50% {
+        transform: translateY(-50%) scale(1.05);
+    }
 }
 
 .player-bottom.active-turn {
@@ -730,8 +737,15 @@ button:disabled {
 }
 
 @keyframes pulseBottom {
-    0%, 100% { transform: translateX(-50%) scale(1); }
-    50% { transform: translateX(-50%) scale(1.05); }
+
+    0%,
+    100% {
+        transform: translateX(-50%) scale(1);
+    }
+
+    50% {
+        transform: translateX(-50%) scale(1.05);
+    }
 }
 
 .player-top.active-turn {
@@ -739,8 +753,15 @@ button:disabled {
 }
 
 @keyframes pulseTop {
-    0%, 100% { transform: translateX(-50%) scale(1); }
-    50% { transform: translateX(-50%) scale(1.05); }
+
+    0%,
+    100% {
+        transform: translateX(-50%) scale(1);
+    }
+
+    50% {
+        transform: translateX(-50%) scale(1.05);
+    }
 }
 
 /* Chat Box Styles */

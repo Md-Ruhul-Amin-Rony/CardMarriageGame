@@ -761,7 +761,7 @@ function updatePlayerPositions(state) {
             teamBadge.className = 'player-team-badge';
             playerDiv.appendChild(teamBadge);
         }
-        
+
         const isTeam1 = position === 0 || position === 2;
         teamBadge.className = `player-team-badge ${isTeam1 ? 'team1-badge' : 'team2-badge'}`;
         teamBadge.textContent = isTeam1 ? 'Team 1' : 'Team 2';
