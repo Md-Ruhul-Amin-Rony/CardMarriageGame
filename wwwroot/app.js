@@ -264,11 +264,12 @@ function updateGameState(state) {
     if (me) myPosition = me.position !== undefined ? me.position : me.Position;
     console.log('My position:', myPosition, 'Phase:', state.phase || state.Phase);
 
-    // Activate chat box after joining room
+    // Activate chat box after joining room (start minimized)
     const chatBox = document.getElementById('chatBox');
     if (!chatBox.classList.contains('active')) {
         chatBox.classList.add('active');
-        // Start collapsed on mobile
+        chatBox.classList.add('minimized'); // Start minimized by default
+        // Also collapsed on mobile
         if (window.innerWidth <= 768) {
             chatBox.classList.add('collapsed');
         }

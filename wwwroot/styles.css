@@ -558,17 +558,22 @@ button:disabled {
     width: 350px;
     max-width: calc(100vw - 40px);
     background: white;
-    border: 2px solid #333;
+    border: 2px solid #667eea;
     border-radius: 10px;
-    display: none;
+    display: flex;
     flex-direction: column;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
     z-index: 1000;
     transition: all 0.3s ease;
 }
 
 .chat-box.active {
     display: flex;
+}
+
+/* Start with chat minimized by default */
+.chat-box.minimized {
+    height: auto;
 }
 
 .chat-box.minimized .chat-content {
