@@ -208,12 +208,12 @@ body {
         max-width: 200px;
     }
 
-    .played-card > div:first-child {
+    .played-card>div:first-child {
         font-size: 0.9em;
         margin-bottom: 5px;
     }
 
-    .played-card > div:last-child {
+    .played-card>div:last-child {
         font-size: 1.5em;
     }
 }

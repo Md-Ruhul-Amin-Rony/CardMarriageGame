@@ -5,7 +5,7 @@ namespace TwentyNineGame.Services;
 public class GameService
 {
     private readonly Dictionary<string, GameState> _games = new();
-    
+
     private readonly Dictionary<string, string> suitSymbols = new()
     {
         { "Hearts", "♥" },
@@ -544,7 +544,7 @@ public class GameService
             // Get the cards player had of lead suit for detailed message
             var leadSuitCards = player.Hand.Where(c => c.Suit == leadSuit).ToList();
             var cardsList = string.Join(", ", leadSuitCards.Select(c => $"{c.Rank}{suitSymbols[c.Suit]}"));
-            
+
             // Determine which team the player belongs to
             bool isFoulPlayerTeam1 = (player.Position == 0 || player.Position == 2);
 
