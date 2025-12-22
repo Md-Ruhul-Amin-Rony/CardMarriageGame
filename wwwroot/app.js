@@ -845,6 +845,20 @@ function updatePlayerPositions(state) {
         teamBadge.className = `player-team-badge ${isTeam1 ? 'team1-badge' : 'team2-badge'}`;
         teamBadge.textContent = isTeam1 ? 'Team 1' : 'Team 2';
 
+        // Add or update points display
+        let pointsDisplay = playerDiv.querySelector('.player-points');
+        if (!pointsDisplay) {
+            pointsDisplay = document.createElement('div');
+            pointsDisplay.className = 'player-points';
+            playerDiv.appendChild(pointsDisplay);
+        }
+
+        // Show team points for this player's team
+        const team1Points = state.team1Points !== undefined ? state.team1Points : state.Team1Points;
+        const team2Points = state.team2Points !== undefined ? state.team2Points : state.Team2Points;
+        const teamPoints = isTeam1 ? team1Points : team2Points;
+        pointsDisplay.textContent = teamPoints !== undefined ? `${teamPoints} pts` : '';
+
         // Highlight current player's turn
         const currentPlayerPosition = state.currentPlayerPosition !== undefined ? state.currentPlayerPosition : state.CurrentPlayerPosition;
         if (position === currentPlayerPosition) {
