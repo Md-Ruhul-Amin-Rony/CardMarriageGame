@@ -5,6 +5,14 @@ namespace TwentyNineGame.Services;
 public class GameService
 {
     private readonly Dictionary<string, GameState> _games = new();
+    
+    private readonly Dictionary<string, string> suitSymbols = new()
+    {
+        { "Hearts", "♥" },
+        { "Diamonds", "♦" },
+        { "Clubs", "♣" },
+        { "Spades", "♠" }
+    };
 
     public GameState? GetGame(string roomId)
     {
@@ -533,6 +541,10 @@ public class GameService
         // FOUL: If player asks for trump but has cards of lead suit, opposing team wins the round
         if (!string.IsNullOrEmpty(leadSuit) && player.Hand.Any(c => c.Suit == leadSuit))
         {
+            // Get the cards player had of lead suit for detailed message
+            var leadSuitCards = player.Hand.Where(c => c.Suit == leadSuit).ToList();
+            var cardsList = string.Join(", ", leadSuitCards.Select(c => $"{c.Rank}{suitSymbols[c.Suit]}"));
+            
             // Determine which team the player belongs to
             bool isFoulPlayerTeam1 = (player.Position == 0 || player.Position == 2);
 
@@ -540,12 +552,22 @@ public class GameService
             if (isFoulPlayerTeam1)
             {
                 game.Team2RoundsWon++;
-                game.WinMessage = $"FOUL! {player.Name} asked for trump but had cards of lead suit! Team 2 wins the round!";
+                game.WinMessage = $"⚠️ FOUL COMMITTED! ⚠️\n\n" +
+                    $"Player: {player.Name} (Position {player.Position + 1}, Team 1)\n" +
+                    $"Violation: Asked for trump while holding lead suit cards\n" +
+                    $"Lead Suit: {leadSuit}\n" +
+                    $"Cards in hand: {cardsList}\n\n" +
+                    $"🏆 Team 2 wins the round by default!";
             }
             else
             {
                 game.Team1RoundsWon++;
-                game.WinMessage = $"FOUL! {player.Name} asked for trump but had cards of lead suit! Team 1 wins the round!";
+                game.WinMessage = $"⚠️ FOUL COMMITTED! ⚠️\n\n" +
+                    $"Player: {player.Name} (Position {player.Position + 1}, Team 2)\n" +
+                    $"Violation: Asked for trump while holding lead suit cards\n" +
+                    $"Lead Suit: {leadSuit}\n" +
+                    $"Cards in hand: {cardsList}\n\n" +
+                    $"🏆 Team 1 wins the round by default!";
             }
 
             // Check if a team has won 10 rounds (overall game winner)
@@ -565,7 +587,7 @@ public class GameService
             return new AskTrumpResult
             {
                 Success = false,
-                Message = "FOUL! You have cards of lead suit. Opposing team wins the round!",
+                Message = $"⚠️ FOUL! You asked for trump but you have {leadSuitCards.Count} card(s) of {leadSuit}: {cardsList}. Opposing team wins the round!",
                 IsFoul = true
             };
         }

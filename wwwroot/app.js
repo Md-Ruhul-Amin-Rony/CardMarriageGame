@@ -597,9 +597,10 @@ function updateTrickComplete(state) {
 function updateRoundEnd(state) {
     const messageLines = state.winMessage ? state.winMessage.split('\n') : [];
     const isGameOver = state.gameWinner != null;
+    const isFoul = state.winMessage && state.winMessage.includes('FOUL');
 
     document.getElementById('winMessage').innerHTML = `
-        <div style="white-space: pre-line;">${state.winMessage || ''}</div>
+        <div style="white-space: pre-line; ${isFoul ? 'background: #ffebee; border: 3px solid #f44336; padding: 20px; border-radius: 10px; color: #c62828; font-weight: bold;' : ''}">${state.winMessage || ''}</div>
         <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px;">
             <p><strong>This Round Points:</strong></p>
             <p>Team 1: ${state.team1Points} points | Team 2: ${state.team2Points} points</p>
