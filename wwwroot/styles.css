@@ -267,6 +267,9 @@ h3 {
     align-items: center;
     transition: all 0.3s ease;
     cursor: pointer;
+    min-height: 60px;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .room-card:hover {
@@ -399,6 +402,29 @@ h3 {
     box-shadow: 0 10px 30px rgba(245, 87, 108, 0.5);
 }
 
+@media (max-width: 768px) {
+    #doubleChallengeSection h2 {
+        font-size: 1.5em;
+    }
+
+    #doubleChallengeSection p {
+        font-size: 0.95em;
+    }
+
+    #acceptDoubleBtn,
+    #declineDoubleBtn {
+        font-size: 1em !important;
+        padding: 12px 20px !important;
+        width: 100%;
+        max-width: 200px;
+    }
+
+    #doubleChallengeSection>div:last-child>div {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+}
+
 @keyframes pulse {
 
     0%,
@@ -467,6 +493,17 @@ button:disabled {
 #gameInfo div {
     margin-bottom: 5px;
     font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    #gameInfo {
+        padding: 12px;
+        font-size: 0.85em;
+    }
+
+    #scoreInfo {
+        font-size: 0.9em;
+    }
 }
 
 .players-status {
@@ -558,7 +595,7 @@ button:disabled {
 
 @media (max-width: 768px) {
     #handCards {
-        gap: 5px;
+        gap: 8px;
         padding: 10px 0;
     }
 
@@ -572,14 +609,19 @@ button:disabled {
     }
 
     .card {
-        padding: 10px 15px;
-        font-size: 0.9em;
-        min-width: 60px;
+        padding: 12px 16px;
+        font-size: 1em;
+        min-width: 70px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .trump-btn {
         padding: 15px;
         font-size: 16px;
+        min-height: 50px;
     }
 }
 
@@ -593,6 +635,8 @@ button:disabled {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     min-width: 80px;
     text-align: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .card.playable {
@@ -617,6 +661,15 @@ button:disabled {
     right: 20px;
     max-width: 400px;
     z-index: 1000;
+}
+
+@media (max-width: 768px) {
+    #messages {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
 }
 
 .message {
@@ -1128,4 +1181,168 @@ button:disabled {
 .card.playable:hover {
     transform: translateY(-10px) scale(1.05);
     box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Tablet Optimization (768px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .game-table {
+        max-width: 700px;
+        height: 450px;
+    }
+
+    .table-center {
+        width: 350px;
+    }
+
+    .player-position {
+        min-width: 110px;
+        padding: 12px;
+    }
+
+    .player-avatar {
+        width: 55px;
+        height: 55px;
+        font-size: 24px;
+    }
+
+    #handCards {
+        gap: 8px;
+    }
+
+    .card {
+        padding: 12px 18px;
+        min-width: 75px;
+    }
+}
+
+/* Landscape Mode Optimization for Mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    body {
+        padding: 5px;
+        padding-bottom: 80px;
+    }
+
+    .screen {
+        padding: 10px;
+    }
+
+    .game-table {
+        height: 300px;
+        margin: 10px auto;
+    }
+
+    .table-center {
+        width: 240px;
+        min-height: 100px;
+    }
+
+    .player-position {
+        padding: 6px;
+        min-width: 80px;
+    }
+
+    .player-top {
+        top: 3px;
+    }
+
+    .player-bottom {
+        bottom: 3px;
+    }
+
+    .player-left {
+        left: -40px;
+    }
+
+    .player-right {
+        right: -40px;
+    }
+
+    .player-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+        margin-bottom: 3px;
+    }
+
+    .player-name {
+        font-size: 10px;
+    }
+
+    .player-card-count,
+    .player-team-badge {
+        font-size: 8px;
+    }
+
+    #gameInfo {
+        font-size: 0.75em;
+        padding: 8px;
+    }
+
+    h1 {
+        font-size: 1.3em;
+    }
+
+    h2 {
+        font-size: 1.1em;
+        margin-bottom: 10px;
+    }
+
+    #handCards {
+        gap: 6px;
+    }
+
+    .card {
+        padding: 8px 12px;
+        min-width: 55px;
+        font-size: 0.85em;
+    }
+
+    #hand {
+        margin-top: 10px;
+    }
+}
+
+/* Small Mobile Devices (< 375px) */
+@media (max-width: 374px) {
+    .game-table {
+        height: 350px;
+    }
+
+    .table-center {
+        width: 240px;
+    }
+
+    .player-position {
+        padding: 6px;
+        min-width: 75px;
+        font-size: 0.75em;
+    }
+
+    .player-left {
+        left: -35px;
+    }
+
+    .player-right {
+        right: -35px;
+    }
+
+    .player-avatar {
+        width: 38px;
+        height: 38px;
+        font-size: 18px;
+    }
+
+    .card {
+        padding: 10px 12px;
+        min-width: 60px;
+        font-size: 0.85em;
+    }
+
+    #handCards {
+        gap: 4px;
+    }
+
+    h1 {
+        font-size: 1.3em;
+    }
 }
