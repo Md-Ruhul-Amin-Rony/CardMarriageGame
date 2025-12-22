@@ -383,12 +383,90 @@ function updateGameState(state) {
 function updateLobby(state) {
     console.log('updateLobby called, players:', state.players);
     const playersDiv = document.getElementById('lobbyPlayers');
-    playersDiv.innerHTML = '<h3>Players:</h3>' +
-        state.players.map(p => `<div>${p.position + 1}. ${p.name}${p.isYou ? ' (You)' : ''}</div>`).join('');
 
+    // Find current player
+    const me = state.players.find(p => p.isYou);
+    const allTeamsSelected = state.players.every(p => p.selectedTeam !== null && p.selectedTeam !== undefined);
+    const team1Count = state.players.filter(p => p.selectedTeam === 1).length;
+    const team2Count = state.players.filter(p => p.selectedTeam === 2).length;
+    const teamsBalanced = team1Count === 2 && team2Count === 2;
+
+    // Build team-based display
+    let playersHTML = '<h3>Players & Teams:</h3>';
+    playersHTML += '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px;">';
+    playersHTML += '<p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">🎯 Choose your team (2 players per team)</p>';
+
+    // Team 1
+    playersHTML += '<div style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #2196F3;">';
+    playersHTML += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">';
+    playersHTML += '<strong style="color: #2196F3;">👥 Team 1:</strong>';
+    if (me && (me.selectedTeam === null || me.selectedTeam === undefined)) {
+        const team1Full = team1Count >= 2;
+        playersHTML += `<button onclick="selectTeam(1)" ${team1Full ? 'disabled' : ''} style="padding: 5px 15px; background: ${team1Full ? '#ccc' : '#2196F3'}; color: white; border: none; border-radius: 5px; cursor: ${team1Full ? 'not-allowed' : 'pointer'}; font-size: 0.9em;">${team1Full ? 'Full' : 'Join Team 1'}</button>`;
+    } else if (me && me.selectedTeam === 1) {
+        playersHTML += '<span style="color: #4CAF50; font-weight: bold; font-size: 0.9em;">✓ Your Team</span>';
+    }
+    playersHTML += '</div>';
+    const team1Players = state.players.filter(p => p.selectedTeam === 1);
+    if (team1Players.length > 0) {
+        team1Players.forEach(p => {
+            playersHTML += `<div style="margin-top: 5px;">• ${p.name}${p.isYou ? ' <strong>(You)</strong>' : ''}</div>`;
+        });
+    } else {
+        playersHTML += '<div style="color: #999; font-style: italic; margin-top: 5px;">Waiting for players...</div>';
+    }
+    playersHTML += `<div style="margin-top: 5px; font-size: 0.85em; color: #666;">${team1Count}/2 players</div>`;
+    playersHTML += '</div>';
+
+    // Team 2
+    playersHTML += '<div style="background: #fff3e0; padding: 12px; border-radius: 6px; border-left: 4px solid #FF9800;">';
+    playersHTML += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">';
+    playersHTML += '<strong style="color: #FF9800;">👥 Team 2:</strong>';
+    if (me && (me.selectedTeam === null || me.selectedTeam === undefined)) {
+        const team2Full = team2Count >= 2;
+        playersHTML += `<button onclick="selectTeam(2)" ${team2Full ? 'disabled' : ''} style="padding: 5px 15px; background: ${team2Full ? '#ccc' : '#FF9800'}; color: white; border: none; border-radius: 5px; cursor: ${team2Full ? 'not-allowed' : 'pointer'}; font-size: 0.9em;">${team2Full ? 'Full' : 'Join Team 2'}</button>`;
+    } else if (me && me.selectedTeam === 2) {
+        playersHTML += '<span style="color: #4CAF50; font-weight: bold; font-size: 0.9em;">✓ Your Team</span>';
+    }
+    playersHTML += '</div>';
+    const team2Players = state.players.filter(p => p.selectedTeam === 2);
+    if (team2Players.length > 0) {
+        team2Players.forEach(p => {
+            playersHTML += `<div style="margin-top: 5px;">• ${p.name}${p.isYou ? ' <strong>(You)</strong>' : ''}</div>`;
+        });
+    } else {
+        playersHTML += '<div style="color: #999; font-style: italic; margin-top: 5px;">Waiting for players...</div>';
+    }
+    playersHTML += `<div style="margin-top: 5px; font-size: 0.85em; color: #666;">${team2Count}/2 players</div>`;
+    playersHTML += '</div>';
+
+    // Status message
+    if (!allTeamsSelected) {
+        playersHTML += '<div style="background: #fff3cd; padding: 10px; border-radius: 5px; margin-top: 10px; text-align: center; color: #856404;">⏳ Waiting for all players to select teams...</div>';
+    } else if (!teamsBalanced) {
+        playersHTML += '<div style="background: #ffebee; padding: 10px; border-radius: 5px; margin-top: 10px; text-align: center; color: #c62828;">⚠️ Teams must be balanced (2 vs 2)</div>';
+    } else {
+        playersHTML += '<div style="background: #e8f5e9; padding: 10px; border-radius: 5px; margin-top: 10px; text-align: center; color: #2e7d32;">✅ All teams ready! Click Start Game</div>';
+    }
+
+    playersHTML += '</div>';
+
+    playersDiv.innerHTML = playersHTML;
+
+    // Only show start button if all conditions are met
     document.getElementById('startBtn').style.display =
-        state.players.length === 4 ? 'block' : 'none';
+        state.players.length === 4 && allTeamsSelected && teamsBalanced ? 'block' : 'none';
     console.log('Start button display:', document.getElementById('startBtn').style.display);
+}
+
+async function selectTeam(teamNumber) {
+    try {
+        await connection.invoke("SelectTeam", currentRoomId, teamNumber);
+        console.log('Team selected:', teamNumber);
+    } catch (err) {
+        console.error('Error selecting team:', err);
+        alert('Failed to select team: ' + err.message);
+    }
 }
 
 function updateDoubleChallenge(state) {

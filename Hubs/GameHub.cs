@@ -45,6 +45,16 @@ public class GameHub : Hub
         await BroadcastGameState(roomId);
     }
 
+    public async Task SelectTeam(string roomId, int teamNumber)
+    {
+        var result = _gameService.SelectTeam(roomId, Context.ConnectionId, teamNumber);
+        if (result != "Success")
+        {
+            await Clients.Caller.SendAsync("Error", result);
+        }
+        await BroadcastGameState(roomId);
+    }
+
     public async Task StartGame(string roomId)
     {
         _gameService.StartGame(roomId);
@@ -166,6 +176,7 @@ public class GameHub : Hub
             {
                 p.Name,
                 p.Position,
+                p.SelectedTeam,
                 HandCount = p.Hand.Count,
                 IsYou = p.ConnectionId == connectionId,
                 p.CurrentBid,

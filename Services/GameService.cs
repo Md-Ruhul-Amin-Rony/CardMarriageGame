@@ -71,20 +71,87 @@ public class GameService
         }
 
         // Add new player
-        game.Players.Add(new Player
+        var newPlayer = new Player
         {
             ConnectionId = connectionId,
             Name = playerName,
             Position = game.Players.Count
-        });
+        };
+
+        // Auto-assign to team if one team is full
+        var team1Count = game.Players.Count(p => p.SelectedTeam == 1);
+        var team2Count = game.Players.Count(p => p.SelectedTeam == 2);
+
+        if (team1Count >= 2)
+        {
+            // Team 1 is full, assign to Team 2
+            newPlayer.SelectedTeam = 2;
+        }
+        else if (team2Count >= 2)
+        {
+            // Team 2 is full, assign to Team 1
+            newPlayer.SelectedTeam = 1;
+        }
+        // Otherwise, let player choose (SelectedTeam remains null)
+
+        game.Players.Add(newPlayer);
 
         return game;
+    }
+
+    public string SelectTeam(string roomId, string connectionId, int teamNumber)
+    {
+        var game = GetGame(roomId);
+        if (game == null) return "Game not found";
+        if (game.Phase != "Waiting") return "Cannot change teams after game starts";
+
+        var player = game.Players.FirstOrDefault(p => p.ConnectionId == connectionId);
+        if (player == null) return "Player not found";
+
+        if (teamNumber != 1 && teamNumber != 2) return "Invalid team number";
+
+        // Check if team is full (max 2 players per team)
+        var teamCount = game.Players.Count(p => p.SelectedTeam == teamNumber && p.ConnectionId != connectionId);
+        if (teamCount >= 2)
+        {
+            return $"Team {teamNumber} is full (max 2 players)";
+        }
+
+        player.SelectedTeam = teamNumber;
+        return "Success";
     }
 
     public void StartGame(string roomId)
     {
         var game = GetGame(roomId);
         if (game == null || game.Players.Count != 4) return;
+
+        // Check if all players have selected teams
+        if (game.Players.Any(p => p.SelectedTeam == null))
+        {
+            return; // Don't start if not all players selected teams
+        }
+
+        // Check if teams are balanced (2 players each)
+        var team1Count = game.Players.Count(p => p.SelectedTeam == 1);
+        var team2Count = game.Players.Count(p => p.SelectedTeam == 2);
+        if (team1Count != 2 || team2Count != 2)
+        {
+            return; // Don't start if teams aren't balanced
+        }
+
+        // Reassign positions based on team selection
+        // Team 1 gets positions 0 and 2, Team 2 gets positions 1 and 3
+        var team1Players = game.Players.Where(p => p.SelectedTeam == 1).ToList();
+        var team2Players = game.Players.Where(p => p.SelectedTeam == 2).ToList();
+
+        team1Players[0].Position = 0;
+        team1Players[1].Position = 2;
+        team2Players[0].Position = 1;
+        team2Players[1].Position = 3;
+
+        // Reorder the players list by position for consistent access
+        game.Players = game.Players.OrderBy(p => p.Position).ToList();
 
         // If there's a game winner, reset the entire game (start fresh)
         if (!string.IsNullOrEmpty(game.GameWinner))
@@ -110,6 +177,15 @@ public class GameService
             // Use the lead player from current trick (which is the last trick winner)
             game.CurrentBidderPosition = game.CurrentTrick.LeadPlayerPosition;
         }
+
+        // Ensure CurrentBidderPosition points to a valid player after position reassignment
+        var currentBidder = game.Players.FirstOrDefault(p => p.Position == game.CurrentBidderPosition);
+        if (currentBidder == null)
+        {
+            // Fallback to first player if somehow invalid
+            game.CurrentBidderPosition = 0;
+        }
+
         game.TrumpRevealed = false;
         game.PlayerWhoAskedForTrump = -1;
         game.TrumpSuit = null;
@@ -260,8 +336,10 @@ public class GameService
         var player = game.Players.FirstOrDefault(p => p.ConnectionId == connectionId);
         if (player == null || player.Position != game.ContractorPosition) return;
 
+        bool is7aOption = trumpSuit == "7a";
+
         // Check if "7a" option is selected (7th card determines trump)
-        if (trumpSuit == "7a")
+        if (is7aOption)
         {
             // The 7th card = contractor's 3rd card from the second batch
             // First 16 cards (4 per player) already dealt at indices 0-15
@@ -290,6 +368,25 @@ public class GameService
 
         // Deal remaining 4 cards to each player after trump is chosen
         DealRemainingCards(game);
+
+        // Check if contractor has only 1 trump card (only for 7a option)
+        if (is7aOption)
+        {
+            var contractor = game.Players[game.ContractorPosition];
+            var trumpCards = contractor.Hand.Where(c => c.Suit == game.TrumpSuit).ToList();
+
+            if (trumpCards.Count == 1)
+            {
+                // Restart the round with a message
+                game.WinMessage = $"⚠️ RESTART REQUIRED! ⚠️\n\n" +
+                    $"Contractor ({contractor.Name}) has only 1 trump card ({trumpCards[0].Rank}{suitSymbols[trumpCards[0].Suit]}) after 7a selection.\n" +
+                    $"Trump suit: {game.TrumpSuit} {suitSymbols[game.TrumpSuit]}\n\n" +
+                    $"Game rules require at least 2 trump cards for fair play.\n" +
+                    $"Click 'New Round' to restart with a new deal.";
+                game.Phase = "RoundEnd";
+                return;
+            }
+        }
 
         // Marriage will be checked when trump is revealed (not here)
 
