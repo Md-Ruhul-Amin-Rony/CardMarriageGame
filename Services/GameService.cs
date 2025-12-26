@@ -544,6 +544,7 @@ public class GameService
         // Marriage bonus: counted from base 16 points, max 4 points
         // Example: bid 18 → bonus = min(4, 18-16) = 2 points
         // Example: bid 20 → bonus = min(4, 20-16) = 4 points
+        //now works fine
         int marriageBonus = 0;
         if (game.HasTrumpMarriage)
         {
