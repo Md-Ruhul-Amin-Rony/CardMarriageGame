@@ -541,9 +541,14 @@ public class GameService
         bool isContractorTeam1 = (game.ContractorPosition == 0 || game.ContractorPosition == 2);
         int contractorTeamPoints = isContractorTeam1 ? game.Team1Points : game.Team2Points;
 
-        if (game.HasTrumpMarriage && contractorTeamPoints >= 16)
+        // Marriage bonus: counted from base 16 points, max 4 points
+        // Example: bid 18 → bonus = min(4, 18-16) = 2 points
+        // Example: bid 20 → bonus = min(4, 20-16) = 4 points
+        int marriageBonus = 0;
+        if (game.HasTrumpMarriage)
         {
-            contractorTeamPoints += 4;
+            marriageBonus = Math.Min(4, game.ContractorBid - 16);
+            contractorTeamPoints += marriageBonus;
         }
 
         // If opposing team has trump marriage, contractor needs 4 more points to win
@@ -599,13 +604,17 @@ public class GameService
     {
         bool isContractorTeam1 = (game.ContractorPosition == 0 || game.ContractorPosition == 2);
 
-        // Check contractor's marriage
-        var contractor = game.Players[game.ContractorPosition];
-        bool contractorHasKing = contractor.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "K");
-        bool contractorHasQueen = contractor.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "Q");
-        game.HasTrumpMarriage = contractorHasKing && contractorHasQueen;
+        // Check contractor's team marriage (contractor OR partner can have both K and Q)
+        var contractorTeamPlayers = game.Players.Where(p =>
+            isContractorTeam1 ? (p.Position == 0 || p.Position == 2) : (p.Position == 1 || p.Position == 3)
+        ).ToList();
 
-        // Check opposing team's marriage
+        game.HasTrumpMarriage = contractorTeamPlayers.Any(p =>
+            p.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "K") &&
+            p.Hand.Any(c => c.Suit == game.TrumpSuit && c.Rank == "Q")
+        );
+
+        // Check opposing team's marriage (any single player with both K and Q)
         var opposingPlayers = game.Players.Where(p =>
             isContractorTeam1 ? (p.Position == 1 || p.Position == 3) : (p.Position == 0 || p.Position == 2)
         ).ToList();
