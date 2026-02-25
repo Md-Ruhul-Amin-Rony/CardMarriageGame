@@ -390,7 +390,7 @@ ASPNETCORE_URLS=http://+:8080
 ### Gameplay Questions
 
 **Q: Can I play with only 2 or 3 players?**  
-A: No, the game requires exactly 4 players to start. This is a core rule of the 29 card game.
+A: No, the game requires exactly 4 players to start in a room. This is a core rule of the 29 card game.
 
 **Q: What happens if someone disconnects during the game?**  
 A: The game state is preserved. The disconnected player can rejoin using the same name. However, if the server restarts, all game data is lost.
